@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
@@ -26,7 +27,8 @@ def doLogin(request):
             return HttpResponse("Email: " + request.POST.get("email") + "password : " + request.POST.get("password"))
 
         else:
-            return HttpResponse("Invailed Login")
+            messages.error(request, "Invailed Login Details")
+            return HttpResponseRedirect("/")
 
 
 def GetUserDetails(request):
