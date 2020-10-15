@@ -1,13 +1,19 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-
 # Create your models here.
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+class CustomUser(AbstractUser):
+    user_type_data = ((1, "HOD"), (2, "Staff"), (3, "Student"))
+    user_type = models.CharField(default=1, choices=user_type_data, max_length=20)
+
 
 class AdminHOD(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100, blank=True)
-    email = models.EmailField(max_length=100, blank=True)
-    password = models.CharField(max_length=255)
+    admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
     objects = models.Manager()
@@ -15,9 +21,7 @@ class AdminHOD(models.Model):
 
 class Staffs(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255)
-    email = models.CharField(max_length=255)
-    password = models.CharField(max_length=255)
+    admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     address = models.TextField(default='-')
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
@@ -44,11 +48,12 @@ class Subjects(models.Model):
 
 class Students(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100, blank=True)
-    email = models.EmailField(max_length=100, blank=True)
-    password = models.CharField(max_length=255)
+    admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     gender = models.CharField(max_length=255)
     profile_pic = models.FileField()
+    address = models.TextField(default='-')
+    session_start_years = models.DateField()
+    session_end_years = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     course_id = models.ForeignKey(Courses, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -133,3 +138,27 @@ class NotificationStaffs(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
     objects = models.Manager()
+
+
+@receiver(post_save, sender=CustomUser)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        if instance.user_type == 1:
+            AdminHOD.objects.create(admin=instance)
+
+        if instance.user_type == 2:
+            Staffs.objects.create(admin=instance)
+
+        if instance.user_type== 3:
+            Students.objects.create(admin=instance)
+
+@receiver(post_save, sender=CustomUser)
+def save_user_profile(sender,instance, **kwargs):
+    if instance.user_type==1:
+        instance.adminhod.save()
+
+    if instance.user_type==2:
+        instance.staffs.save()
+
+    if instance.user_type==3:
+        instance.students.save()
