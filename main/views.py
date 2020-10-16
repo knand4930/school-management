@@ -9,7 +9,7 @@ from main.EmailBackEnd import EmailBackEnd
 
 
 def home(request):
-    return render(request, 'index.html')
+    return render(request, 'demo.html')
 
 
 def ShowLoginPage(request):
@@ -24,7 +24,9 @@ def doLogin(request):
                                          password=request.POST.get("password"))  # EmailBackEnd.
         if user != None:
             login(request, user)
-            return HttpResponse("Email: " + request.POST.get("email") + "password : " + request.POST.get("password"))
+            return HttpResponseRedirect('admin_home')
+
+        # return HttpResponse("Email: " + request.POST.get("email") + "password : " + request.POST.get("password"))
 
         else:
             messages.error(request, "Invailed Login Details")
